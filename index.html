@@ -2,18 +2,133 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Đào tạo an toàn lao động</title>
+  <title>Đào tạo nhận diện mối nguy</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 800px;
+      max-width: 100%;
+      margin: 0 auto;
+      border: 3px solid #333;
+      background: #000;
+    }
+
+    iframe {
+      width: 100%;
+      height: 450px;
+      display: block;
+    }
+
+    .hazard {
+      position: absolute;
+      border: 2px dashed red;
+      cursor: pointer;
+      background: rgba(255, 0, 0, 0.15);
+    }
+
+    .hazard.clicked {
+      background: rgba(0, 200, 0, 0.3);
+      border-color: green;
+    }
+
+    .info {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 18px;
+    }
+
+    .result {
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Nhận diện mối nguy trong video</h2>
+<h1>Nhận diện mối nguy trong video</h1>
+
 <div class="video-wrapper">
+
+  <!-- 🔹 NHÚNG VIDEO YOUTUBE -->
+  <!-- CHỈ CẦN THAY VIDEO ID -->
   <iframe
-    width="640"
-    height="360"
-    src="https://www.youtube.com/embed/fXYMaqxx2sY"
+    src="https://www.youtube.com/embed/fXYMaqxx2sY?rel=0"
+    frameborder="0"
     allowfullscreen>
   </iframe>
+
+  <!-- 🔴 CLICK ZONE – MỐI NGUY -->
+  <!-- Tùy chỉnh top / left / width / height -->
+  <div class="hazard" data-id="1"
+       style="top: 120px; left: 100px; width: 150px; height: 120px;"></div>
+
+  <div class="hazard" data-id="2"
+       style="top: 250px; left: 320px; width: 160px; height: 130px;"></div>
+
+  <div class="hazard" data-id="3"
+       style="top: 160px; left: 520px; width: 140px; height: 110px;"></div>
+
 </div>
+
+<div class="info">
+  Mối nguy đã phát hiện: <span id="count">0</span> / <span id="total">3</span>
+</div>
+
+<div style="text-align:center;">
+  <button onclick="checkResult()">Xem kết quả</button>
+</div>
+
+<div class="result" id="result"></div>
+
+<script>
+  const hazards = document.querySelectorAll('.hazard');
+  const totalHazards = hazards.length;
+  let found = 0;
+
+  document.getElementById('total').innerText = totalHazards;
+
+  hazards.forEach(hazard => {
+    hazard.addEventListener('click', function () {
+      if (!this.classList.contains('clicked')) {
+        this.classList.add('clicked');
+        found++;
+        document.getElementById('count').innerText = found;
+      }
+    });
+  });
+
+  function checkResult() {
+    const result = document.getElementById('result');
+    if (found === totalHazards) {
+      result.style.color = 'green';
+      result.innerHTML = "✅ TỐT! Nhân vật đã tránh được tai nạn lao động.";
+    } else {
+      result.style.color = 'red';
+      result.innerHTML = "❌ CHƯA ĐỦ! Nhân vật đã gặp tai nạn lao động.";
+    }
+  }
+</script>
+
 </body>
 </html>
