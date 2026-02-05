@@ -12,18 +12,11 @@ h1 { text-align:center }
   position:relative;
   width:800px; max-width:100%;
   margin:auto;
+  background:#000;
 }
 
-iframe {
+video {
   width:100%;
-  height:450px;
-}
-
-.overlay {
-  position:absolute;
-  top:0; left:0;
-  width:100%; height:100%;
-  display:none;
 }
 
 .hazard {
@@ -31,6 +24,7 @@ iframe {
   border:2px dashed red;
   background:rgba(255,0,0,.25);
   cursor:pointer;
+  display:none;
 }
 
 .hazard.clicked {
@@ -49,56 +43,62 @@ iframe {
 
 <body>
 
-<h1>Nhận diện mối nguy (00:21 → 00:30)</h1>
+<h1>Nhận diện mối nguy (0:20 → 0:30)</h1>
 
 <div class="video-wrapper">
 
-<iframe
-  src="https://www.youtube.com/embed/fXYMaqxx2sY?start=21&autoplay=1&mute=1"
-  allow="autoplay"
-  frameborder="0">
-</iframe>
+<video id="video" autoplay muted>
+  <source src="https://drive.google.com/uc?export=download&id=1s3D8CcwvYhG_KOEMjo1G6pnbNYSOOGH6" type="video/mp4">
+</video>
 
-<div class="overlay" id="overlay">
-  <div class="hazard" style="top:120px; left:100px; width:150px; height:120px;"></div>
-  <div class="hazard" style="top:240px; left:360px; width:160px; height:130px;"></div>
-</div>
+<!-- CLICK ZONE -->
+<div class="hazard" style="top:120px; left:100px; width:150px; height:120px;"></div>
+<div class="hazard" style="top:240px; left:360px; width:160px; height:130px;"></div>
 
 </div>
 
 <div class="result" id="result"></div>
 
 <script>
-const overlay = document.getElementById('overlay');
+const video = document.getElementById('video');
 const hazards = document.querySelectorAll('.hazard');
+const STOP_TIME = 20;
 const total = hazards.length;
 let found = 0;
+let evaluated = false;
 
-// Sau 9 giây (21 → 30)
-setTimeout(() => {
-  overlay.style.display = 'block';
-}, 9000);
+// Dừng video tại 20s để đánh giá
+video.addEventListener('timeupdate', () => {
+  if (video.currentTime >= STOP_TIME && !evaluated) {
+    video.pause();
+    hazards.forEach(h => h.style.display = 'block');
+  }
+});
 
+// Click mối nguy
 hazards.forEach(h => {
   h.onclick = () => {
     if (!h.classList.contains('clicked')) {
       h.classList.add('clicked');
       found++;
       if (found === total) {
+        evaluated = true;
         document.getElementById('result').innerHTML =
           "✅ ĐÁNH GIÁ ĐÚNG – TRÁNH ĐƯỢC TAI NẠN";
+        video.pause();
       }
     }
-  }
+  };
 });
 
-// Sau 15 giây nếu chưa đủ → tai nạn
+// Nếu sau 10s không đủ → tai nạn
 setTimeout(() => {
-  if (found < total) {
+  if (!evaluated) {
     document.getElementById('result').innerHTML =
-      "❌ ĐÁNH GIÁ CHƯA ĐỦ – <a href='https://youtu.be/fXYMaqxx2sY?t=30' target='_blank'>Xem tai nạn xảy ra</a>";
+      "❌ ĐÁNH GIÁ CHƯA ĐỦ – TAI NẠN XẢY RA";
+    video.play();
   }
-}, 15000);
+}, 30000);
 </script>
 
 </body>
