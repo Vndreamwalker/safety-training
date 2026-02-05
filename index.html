@@ -24,7 +24,26 @@ h1 {
   margin:auto;
   background:#000;
   border:3px solid #333;
-  aspect-ratio: 16 / 9;
+  aspect-ratio:16/9;
+  overflow:hidden;
+}
+
+/* lớp nhấp nháy */
+.flash {
+  position:absolute;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  z-index:20;
+  display:none;
+}
+
+.flash.success {
+  background:rgba(0,200,0,.35);
+}
+
+.flash.fail {
+  background:rgba(255,0,0,.35);
 }
 
 #player,
@@ -42,7 +61,7 @@ h1 {
   display:none;
 }
 
-/* vùng chọn của người học */
+/* vùng chọn */
 .user-select {
   position:absolute;
   width:25%;
@@ -54,7 +73,7 @@ h1 {
   display:none;
 }
 
-/* mối nguy thật */
+/* mối nguy */
 .hazard {
   position:absolute;
   border:3px dashed red;
@@ -68,7 +87,24 @@ h1 {
   background:rgba(0,200,0,.35);
 }
 
-.info,.result {
+/* thông báo */
+.message {
+  position:absolute;
+  bottom:10%;
+  left:50%;
+  transform:translateX(-50%);
+  padding:12px 18px;
+  font-size:18px;
+  font-weight:bold;
+  color:#fff;
+  background:rgba(0,0,0,.7);
+  border-radius:8px;
+  z-index:30;
+  display:none;
+  text-align:center;
+}
+
+.info {
   text-align:center;
   margin-top:12px;
   font-size:16px;
@@ -86,7 +122,10 @@ h1 {
   <div id="click-layer"></div>
   <div id="userSelect" class="user-select"></div>
 
-  <!-- MỐI NGUY (LƯU THEO TỶ LỆ %) -->
+  <div id="flash" class="flash"></div>
+  <div id="message" class="message"></div>
+
+  <!-- MỐI NGUY (TỶ LỆ %) -->
   <div class="hazard" data-id="1"
        data-x="0.12" data-y="0.26" data-w="0.18" data-h="0.26"></div>
 
@@ -97,8 +136,6 @@ h1 {
 <div class="info">
   Lượt chọn: <span id="tries">0</span> / 2
 </div>
-
-<div class="result" id="result"></div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
 
@@ -115,8 +152,10 @@ let evaluated = false;
 const hazards    = document.querySelectorAll('.hazard');
 const clickLayer = document.getElementById('click-layer');
 const userSelect = document.getElementById('userSelect');
+const flashBox   = document.getElementById('flash');
+const messageBox = document.getElementById('message');
 
-/* ===== RENDER MỐI NGUY THEO TỶ LỆ ===== */
+/* render hazard theo % */
 function renderHazards() {
   const w = clickLayer.clientWidth;
   const h = clickLayer.clientHeight;
@@ -128,10 +167,9 @@ function renderHazards() {
     hz.style.height = hz.dataset.h * h + 'px';
   });
 }
-
 window.addEventListener('resize', renderHazards);
 
-/* ===== YOUTUBE ===== */
+/* YouTube */
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
     videoId: 'fXYMaqxx2sY',
@@ -154,7 +192,21 @@ function onPlayerReady() {
   }, 200);
 }
 
-/* ===== XỬ LÝ CLICK (CHUẨN PC + MOBILE) ===== */
+/* hiệu ứng nhấp nháy */
+function flash(type, text) {
+  flashBox.className = 'flash ' + type;
+  messageBox.innerText = text;
+
+  flashBox.style.display = 'block';
+  messageBox.style.display = 'block';
+
+  setTimeout(() => {
+    flashBox.style.display = 'none';
+    messageBox.style.display = 'none';
+  }, 1500);
+}
+
+/* click */
 clickLayer.addEventListener('pointerdown', e => {
   if (evaluated || tries >= MAX_TRIES) return;
 
@@ -162,65 +214,38 @@ clickLayer.addEventListener('pointerdown', e => {
   document.getElementById('tries').innerText = tries;
 
   const rect = clickLayer.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
 
-  const clickX = (e.clientX - rect.left) / rect.width;
-  const clickY = (e.clientY - rect.top) / rect.height;
-
-  /* HIỂN THỊ VIỀN CHỌN ĐỂ KIỂM TRA */
-  userSelect.style.left = (clickX * 100 - 12.5) + '%';
-  userSelect.style.top  = (clickY * 100 - 12.5) + '%';
+  userSelect.style.left = (x * 100 - 12.5) + '%';
+  userSelect.style.top  = (y * 100 - 12.5) + '%';
   userSelect.style.display = 'block';
 
   let hit = false;
 
   hazards.forEach(hz => {
-    const hx = parseFloat(hz.dataset.x);
-    const hy = parseFloat(hz.dataset.y);
-    const hw = parseFloat(hz.dataset.w);
-    const hh = parseFloat(hz.dataset.h);
+    const hx = +hz.dataset.x;
+    const hy = +hz.dataset.y;
+    const hw = +hz.dataset.w;
+    const hh = +hz.dataset.h;
 
-    if (
-      clickX >= hx &&
-      clickX <= hx + hw &&
-      clickY >= hy &&
-      clickY <= hy + hh
-    ) {
+    if (x >= hx && x <= hx + hw && y >= hy && y <= hy + hh) {
       hit = true;
       hz.classList.add('correct');
     }
   });
 
-  /* NẾU CHỌN ĐÚNG → ẨN VIỀN */
   if (hit) {
-    setTimeout(() => {
-      userSelect.style.display = 'none';
-    }, 500);
-  }
-
-  if (tries >= MAX_TRIES) evaluate();
-});
-
-/* ===== ĐÁNH GIÁ ===== */
-function evaluate() {
-  evaluated = true;
-  clickLayer.style.display = 'none';
-
-  hazards.forEach(h => h.style.display = 'block');
-
-  const result = document.getElementById('result');
-
-  const correctCount = document.querySelectorAll('.hazard.correct').length;
-
-  if (correctCount === hazards.length) {
-    result.style.color = 'green';
-    result.innerHTML = "✅ ĐÁNH GIÁ ĐÚNG – NGĂN CHẶN TAI NẠN";
+    setTimeout(() => userSelect.style.display = 'none', 300);
+    evaluated = true;
+    clickLayer.style.display = 'none';
+    hazards.forEach(h => h.style.display = 'block');
+    flash('success', '🎉 Chúc mừng bạn đã dừng được tai nạn');
     player.stopVideo();
   } else {
-    result.style.color = 'red';
-    result.innerHTML = "❌ ĐÁNH GIÁ CHƯA ĐỦ – TAI NẠN XẢY RA";
-    player.playVideo();
+    flash('fail', '⚠️ Tai nạn sắp xảy ra');
   }
-}
+});
 </script>
 
 </body>
