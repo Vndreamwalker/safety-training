@@ -41,7 +41,7 @@ h1 {
   display:none;
 }
 
-/* vùng click người học */
+/* VÙNG CHỌN – HIỂN THỊ SẴN */
 .user-select {
   position:absolute;
   width:25%;
@@ -50,10 +50,11 @@ h1 {
   background:rgba(0,123,255,.2);
   pointer-events:none;
   z-index:7;
-  display:none;
+  left:37.5%;
+  top:37.5%;
 }
 
-/* mối nguy – HIỂN THỊ SẴN */
+/* mối nguy */
 .hazard {
   position:absolute;
   border:3px dashed red;
@@ -82,9 +83,11 @@ h1 {
 <div class="video-wrapper">
   <div id="player"></div>
   <div id="click-layer"></div>
+
+  <!-- VÙNG CHỌN HIỂN THỊ NGAY -->
   <div id="userSelect" class="user-select"></div>
 
-  <!-- ===== 7 MỐI NGUY ===== -->
+  <!-- 7 MỐI NGUY -->
   <div class="hazard" data-id="1" data-x="0.12" data-y="0.30" data-w="0.15" data-h="0.35"></div>
   <div class="hazard" data-id="2" data-x="0.40" data-y="0.18" data-w="0.12" data-h="0.25"></div>
   <div class="hazard" data-id="3" data-x="0.37" data-y="0.50" data-w="0.20" data-h="0.18"></div>
@@ -117,7 +120,7 @@ const MAX_TRIES  = hazards.length;
 const clickLayer = document.getElementById('click-layer');
 const userSelect = document.getElementById('userSelect');
 
-/* ===== RENDER THEO TỶ LỆ ===== */
+/* RENDER THEO TỶ LỆ */
 function renderHazards() {
   const w = clickLayer.clientWidth;
   const h = clickLayer.clientHeight;
@@ -132,7 +135,7 @@ function renderHazards() {
 
 window.addEventListener('resize', renderHazards);
 
-/* ===== YOUTUBE ===== */
+/* YOUTUBE */
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
     videoId: 'fXYMaqxx2sY',
@@ -155,7 +158,7 @@ function onPlayerReady() {
   }, 200);
 }
 
-/* ===== CLICK ===== */
+/* CLICK DI CHUYỂN VÙNG CHỌN */
 clickLayer.addEventListener('pointerdown', e => {
   if (evaluated || tries >= MAX_TRIES) return;
 
@@ -168,7 +171,6 @@ clickLayer.addEventListener('pointerdown', e => {
 
   userSelect.style.left = (x * 100 - 12.5) + '%';
   userSelect.style.top  = (y * 100 - 12.5) + '%';
-  userSelect.style.display = 'block';
 
   hazards.forEach(hz => {
     const hx = +hz.dataset.x;
@@ -184,7 +186,7 @@ clickLayer.addEventListener('pointerdown', e => {
   if (tries >= MAX_TRIES) evaluate();
 });
 
-/* ===== ĐÁNH GIÁ ===== */
+/* ĐÁNH GIÁ */
 function evaluate() {
   evaluated = true;
   clickLayer.style.display = 'none';
@@ -192,13 +194,11 @@ function evaluate() {
   const correct = document.querySelectorAll('.hazard.correct').length;
   const result = document.getElementById('result');
 
-  if (correct === hazards.length) {
-    result.style.color = 'green';
-    result.innerHTML = "✅ PHÁT HIỆN ĐỦ 7 MỐI NGUY";
-  } else {
-    result.style.color = 'red';
-    result.innerHTML = `❌ PHÁT HIỆN ${correct}/7 MỐI NGUY`;
-  }
+  result.style.color = correct === hazards.length ? 'green' : 'red';
+  result.innerHTML =
+    correct === hazards.length
+      ? "✅ PHÁT HIỆN ĐỦ 7 MỐI NGUY"
+      : `❌ PHÁT HIỆN ${correct}/7 MỐI NGUY`;
 }
 </script>
 
