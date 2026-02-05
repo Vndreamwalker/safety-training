@@ -1,210 +1,113 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<title>Đào tạo nhận diện mối nguy</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background:#f5f5f5;
-  padding:15px;
-}
-
-h1 { text-align:center }
-
-.video-wrapper {
-  position:relative;
-  max-width:800px;
-  margin:auto;
-  background:#000;
-  border:3px solid #333;
-}
-
-#player {
-  width:100%;
-  aspect-ratio:16/9;
-}
-
-/* lớp bắt click */
-#click-layer {
-  position:absolute;
-  inset:0;
-  cursor:crosshair;
-  display:none;
-}
-
-/* vùng chọn */
-#select-box {
-  position:absolute;
-  width:120px;
-  height:120px;
-  border:3px solid #007bff;
-  background:rgba(0,123,255,.25);
-  pointer-events:none;
-  display:none;
-}
-
-/* mối nguy thật */
-.hazard {
-  position:absolute;
-  border:3px dashed red;
-  background:rgba(255,0,0,.25);
-  display:none;
-}
-
-.hazard.correct {
-  border-color:lime;
-  background:rgba(0,255,0,.3);
-}
-
-/* hiệu ứng kết quả */
-.flash-green {
-  animation: greenFlash 0.4s 4;
-}
-.flash-red {
-  animation: redFlash 0.4s 4;
-}
-
-@keyframes greenFlash {
-  0%{background:#000}
-  50%{background:#1cff1c}
-  100%{background:#000}
-}
-@keyframes redFlash {
-  0%{background:#000}
-  50%{background:#ff2b2b}
-  100%{background:#000}
-}
-
-.info,.result {
-  text-align:center;
-  font-size:18px;
-  margin-top:10px;
-  font-weight:bold;
-}
-</style>
-</head>
-
-<body>
-
-<h1>Nhận diện mối nguy</h1>
-
-<div class="video-wrapper" id="wrapper">
-  <div id="player"></div>
-  <div id="click-layer"></div>
-  <div id="select-box"></div>
-
-  <!-- MỐI NGUY -->
-  <div class="hazard" data-id="1"
-    style="top:120px;left:90px;width:150px;height:120px"></div>
-
-  <div class="hazard" data-id="2"
-    style="top:240px;left:360px;width:160px;height:130px"></div>
-</div>
-
-<div class="info">
-  Lượt chọn: <span id="tries">0</span> / 2
-</div>
-<div class="result" id="result"></div>
-
-<script src="https://www.youtube.com/iframe_api"></script>
 <script>
 let player;
-const START = 20;
-const STOP = 30;
-const MAX_TRIES = 2;
-const BOX = 120;
+
+const START_TIME = 20;
+const STOP_TIME  = 30;
+const MAX_TRIES  = 2;
 
 let tries = 0;
-let hits = new Set();
+let evaluated = false;
 
-const wrapper = document.getElementById('wrapper');
+const hazards    = document.querySelectorAll('.hazard');
 const clickLayer = document.getElementById('click-layer');
-const selectBox = document.getElementById('select-box');
-const hazards = document.querySelectorAll('.hazard');
+const userSelect = document.getElementById('userSelect');
+const flashBox   = document.getElementById('flash');
+const messageBox = document.getElementById('message');
 
-function onYouTubeIframeAPIReady(){
-  player = new YT.Player('player',{
-    videoId:'fXYMaqxx2sY',
-    events:{ onReady:onReady }
+/* render hazard theo % */
+function renderHazards() {
+  const w = clickLayer.clientWidth;
+  const h = clickLayer.clientHeight;
+
+  hazards.forEach(hz => {
+    hz.style.left   = hz.dataset.x * w + 'px';
+    hz.style.top    = hz.dataset.y * h + 'px';
+    hz.style.width  = hz.dataset.w * w + 'px';
+    hz.style.height = hz.dataset.h * h + 'px';
+  });
+}
+window.addEventListener('resize', renderHazards);
+
+/* YouTube */
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('player', {
+    videoId: 'fXYMaqxx2sY',
+    playerVars: { controls: 1, rel: 0 },
+    events: { onReady: onPlayerReady }
   });
 }
 
-function onReady(){
-  player.seekTo(START,true);
+function onPlayerReady() {
+  renderHazards();
+  player.seekTo(START_TIME, true);
   player.playVideo();
 
-  const t = setInterval(()=>{
-    if(player.getCurrentTime()>=STOP){
+  const timer = setInterval(() => {
+    if (player.getCurrentTime() >= STOP_TIME) {
       player.pauseVideo();
-      clickLayer.style.display='block';
-      clearInterval(t);
+      clickLayer.style.display = 'block';
+      clearInterval(timer);
     }
-  },200);
+  }, 200);
 }
 
-/* xử lý click + touch */
-clickLayer.addEventListener('pointerdown', e=>{
-  if(tries>=MAX_TRIES) return;
+/* hiệu ứng */
+function flash(type, text) {
+  flashBox.className = 'flash ' + type;
+  messageBox.innerText = text;
+
+  flashBox.style.display = 'block';
+  messageBox.style.display = 'block';
+
+  setTimeout(() => {
+    flashBox.style.display = 'none';
+    messageBox.style.display = 'none';
+  }, 1500);
+}
+
+/* xử lý click */
+clickLayer.addEventListener('pointerdown', e => {
+  if (evaluated || tries >= MAX_TRIES) return;
 
   tries++;
   document.getElementById('tries').innerText = tries;
 
   const rect = clickLayer.getBoundingClientRect();
-  const x = e.clientX - rect.left - BOX/2;
-  const y = e.clientY - rect.top  - BOX/2;
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
 
-  selectBox.style.left = x+'px';
-  selectBox.style.top  = y+'px';
-  selectBox.style.display='block';
+  let hit = false;
 
-  hazards.forEach(h=>{
-    const hx = h.offsetLeft;
-    const hy = h.offsetTop;
-    const hw = h.offsetWidth;
-    const hh = h.offsetHeight;
+  hazards.forEach(hz => {
+    const hx = +hz.dataset.x;
+    const hy = +hz.dataset.y;
+    const hw = +hz.dataset.w;
+    const hh = +hz.dataset.h;
 
-    if(
-      x+BOX > hx &&
-      x < hx+hw &&
-      y+BOX > hy &&
-      y < hy+hh
-    ){
-      hits.add(h.dataset.id);
+    if (x >= hx && x <= hx + hw && y >= hy && y <= hy + hh) {
+      hit = true;
+      hz.classList.add('correct');
     }
   });
 
-  if(tries===MAX_TRIES){
-    setTimeout(checkResult,800);
-  }
-});
+  /* SAU KHI ĐÁNH GIÁ → mới hiện vùng chọn */
+  userSelect.style.left = (x * 100 - 12.5) + '%';
+  userSelect.style.top  = (y * 100 - 12.5) + '%';
+  userSelect.style.display = 'block';
 
-function checkResult(){
-  clickLayer.style.display='none';
-  selectBox.style.display='none';
-
-  hazards.forEach(h=>{
-    h.style.display='block';
-    if(hits.has(h.dataset.id)) h.classList.add('correct');
-  });
-
-  const result = document.getElementById('result');
-
-  if(hits.size === hazards.length){
-    wrapper.classList.add('flash-green');
-    result.style.color='green';
-    result.innerHTML='✅ Chúc mừng! Bạn đã dừng được tai nạn';
+  if (hit) {
+    evaluated = true;
+    clickLayer.style.display = 'none';
+    hazards.forEach(h => h.style.display = 'block');
+    flash('success', '🎉 Chúc mừng bạn đã dừng được tai nạn');
     player.stopVideo();
   } else {
-    wrapper.classList.add('flash-red');
-    result.style.color='red';
-    result.innerHTML='❌ Tai nạn sắp xảy ra!';
-    player.playVideo();
-  }
-}
-</script>
+    flash('fail', '⚠️ Tai nạn sắp xảy ra');
 
-</body>
-</html>
+    if (tries >= MAX_TRIES) {
+      clickLayer.style.display = 'none';
+      hazards.forEach(h => h.style.display = 'block');
+    }
+  }
+});
+</script>
