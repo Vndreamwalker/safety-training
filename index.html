@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Đào tạo nhận diện mối nguy</title>
+<title>Nhận diện mối nguy</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -20,29 +20,28 @@ h1 {
 .video-wrapper {
   position:relative;
   width:100%;
-  max-width:800px;
+  max-width:900px;
   margin:auto;
   background:#000;
   border:3px solid #333;
-  aspect-ratio: 16 / 9;
+  aspect-ratio:16/9;
 }
 
 #player,
 #click-layer {
   position:absolute;
-  top:0; left:0;
+  inset:0;
   width:100%;
   height:100%;
 }
 
-/* lớp bắt click */
 #click-layer {
-  z-index:5;
+  z-index:6;
   cursor:crosshair;
   display:none;
 }
 
-/* vùng chọn của người học */
+/* vùng click người học */
 .user-select {
   position:absolute;
   width:25%;
@@ -50,17 +49,16 @@ h1 {
   border:3px solid #007bff;
   background:rgba(0,123,255,.2);
   pointer-events:none;
-  z-index:6;
+  z-index:7;
   display:none;
 }
 
-/* mối nguy thật */
+/* mối nguy – HIỂN THỊ SẴN */
 .hazard {
   position:absolute;
   border:3px dashed red;
   background:rgba(255,0,0,.25);
-  display:none;
-  z-index:4;
+  z-index:5;
 }
 
 .hazard.correct {
@@ -86,35 +84,18 @@ h1 {
   <div id="click-layer"></div>
   <div id="userSelect" class="user-select"></div>
 
-  <!-- MỐI NGUY (LƯU THEO TỶ LỆ %) -->
-<!-- Mối nguy 3: Tủ điện (nguy cơ điện giật) -->
-<div class="hazard" data-id="3"
-     data-x="0.40" data-y="0.18"
-     data-w="0.12" data-h="0.25"></div>
-
-<!-- Mối nguy 4: Vật liệu cách nhiệt để dưới sàn (cản trở lối đi) -->
-<div class="hazard" data-id="4"
-     data-x="0.37" data-y="0.50"
-     data-w="0.20" data-h="0.18"></div>
-
-<!-- Mối nguy 5: Bình/thiết bị điện đặt dưới đất -->
-<div class="hazard" data-id="5"
-     data-x="0.50" data-y="0.58"
-     data-w="0.08" data-h="0.15"></div>
-
-<!-- Mối nguy 6: Đường ống / trụ đứng sát khu làm việc -->
-<div class="hazard" data-id="6"
-     data-x="0.56" data-y="0.25"
-     data-w="0.08" data-h="0.45"></div>
-
-<!-- Mối nguy 7: Kiện hàng đặt sát tường (va chạm / đổ ngã) -->
-<div class="hazard" data-id="7"
-     data-x="0.63" data-y="0.45"
-     data-w="0.22" data-h="0.30"></div>
+  <!-- ===== 7 MỐI NGUY ===== -->
+  <div class="hazard" data-id="1" data-x="0.12" data-y="0.30" data-w="0.15" data-h="0.35"></div>
+  <div class="hazard" data-id="2" data-x="0.40" data-y="0.18" data-w="0.12" data-h="0.25"></div>
+  <div class="hazard" data-id="3" data-x="0.37" data-y="0.50" data-w="0.20" data-h="0.18"></div>
+  <div class="hazard" data-id="4" data-x="0.50" data-y="0.58" data-w="0.08" data-h="0.15"></div>
+  <div class="hazard" data-id="5" data-x="0.56" data-y="0.25" data-w="0.08" data-h="0.45"></div>
+  <div class="hazard" data-id="6" data-x="0.63" data-y="0.45" data-w="0.22" data-h="0.30"></div>
+  <div class="hazard" data-id="7" data-x="0.28" data-y="0.40" data-w="0.12" data-h="0.22"></div>
 </div>
 
 <div class="info">
-  Lượt chọn: <span id="tries">0</span> / 2
+  Lượt chọn: <span id="tries">0</span> / 7
 </div>
 
 <div class="result" id="result"></div>
@@ -126,16 +107,17 @@ let player;
 
 const START_TIME = 20;
 const STOP_TIME  = 30;
-const MAX_TRIES  = 2;
 
 let tries = 0;
 let evaluated = false;
 
 const hazards    = document.querySelectorAll('.hazard');
+const MAX_TRIES  = hazards.length;
+
 const clickLayer = document.getElementById('click-layer');
 const userSelect = document.getElementById('userSelect');
 
-/* ===== RENDER MỐI NGUY THEO TỶ LỆ ===== */
+/* ===== RENDER THEO TỶ LỆ ===== */
 function renderHazards() {
   const w = clickLayer.clientWidth;
   const h = clickLayer.clientHeight;
@@ -173,7 +155,7 @@ function onPlayerReady() {
   }, 200);
 }
 
-/* ===== XỬ LÝ CLICK (CHUẨN PC + MOBILE) ===== */
+/* ===== CLICK ===== */
 clickLayer.addEventListener('pointerdown', e => {
   if (evaluated || tries >= MAX_TRIES) return;
 
@@ -181,40 +163,23 @@ clickLayer.addEventListener('pointerdown', e => {
   document.getElementById('tries').innerText = tries;
 
   const rect = clickLayer.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
 
-  const clickX = (e.clientX - rect.left) / rect.width;
-  const clickY = (e.clientY - rect.top) / rect.height;
-
-  /* HIỂN THỊ VIỀN CHỌN ĐỂ KIỂM TRA */
-  userSelect.style.left = (clickX * 100 - 12.5) + '%';
-  userSelect.style.top  = (clickY * 100 - 12.5) + '%';
+  userSelect.style.left = (x * 100 - 12.5) + '%';
+  userSelect.style.top  = (y * 100 - 12.5) + '%';
   userSelect.style.display = 'block';
 
-  let hit = false;
-
   hazards.forEach(hz => {
-    const hx = parseFloat(hz.dataset.x);
-    const hy = parseFloat(hz.dataset.y);
-    const hw = parseFloat(hz.dataset.w);
-    const hh = parseFloat(hz.dataset.h);
+    const hx = +hz.dataset.x;
+    const hy = +hz.dataset.y;
+    const hw = +hz.dataset.w;
+    const hh = +hz.dataset.h;
 
-    if (
-      clickX >= hx &&
-      clickX <= hx + hw &&
-      clickY >= hy &&
-      clickY <= hy + hh
-    ) {
-      hit = true;
+    if (x >= hx && x <= hx + hw && y >= hy && y <= hy + hh) {
       hz.classList.add('correct');
     }
   });
-
-  /* NẾU CHỌN ĐÚNG → ẨN VIỀN */
-  if (hit) {
-    setTimeout(() => {
-      userSelect.style.display = 'none';
-    }, 500);
-  }
 
   if (tries >= MAX_TRIES) evaluate();
 });
@@ -224,24 +189,18 @@ function evaluate() {
   evaluated = true;
   clickLayer.style.display = 'none';
 
-  hazards.forEach(h => h.style.display = 'block');
-
+  const correct = document.querySelectorAll('.hazard.correct').length;
   const result = document.getElementById('result');
 
-  const correctCount = document.querySelectorAll('.hazard.correct').length;
-
-  if (correctCount === hazards.length) {
+  if (correct === hazards.length) {
     result.style.color = 'green';
-    result.innerHTML = "✅ ĐÁNH GIÁ ĐÚNG – NGĂN CHẶN TAI NẠN";
-    player.stopVideo();
+    result.innerHTML = "✅ PHÁT HIỆN ĐỦ 7 MỐI NGUY";
   } else {
     result.style.color = 'red';
-    result.innerHTML = "❌ ĐÁNH GIÁ CHƯA ĐỦ – TAI NẠN XẢY RA";
-    player.playVideo();
+    result.innerHTML = `❌ PHÁT HIỆN ${correct}/7 MỐI NGUY`;
   }
 }
 </script>
 
 </body>
 </html>
-
