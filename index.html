@@ -151,9 +151,21 @@ clickLayer.addEventListener('click', e => {
 
   /* kiểm tra trúng mối nguy */
   hazards.forEach(h => {
-    const hRect = h.getBoundingClientRect();
-    const hx = hRect.left - rect.left;
-    const hy = hRect.top  - rect.top;
+hazards.forEach(h => {
+  const hx = h.offsetLeft;
+  const hy = h.offsetTop;
+  const hw = h.offsetWidth;
+  const hh = h.offsetHeight;
+
+  if (
+    x + BOX_SIZE >= hx &&
+    x <= hx + hw &&
+    y + BOX_SIZE >= hy &&
+    y <= hy + hh
+  ) {
+    foundHazards.add(h.dataset.id);
+  }
+});
 
     if (
       x + BOX_SIZE >= hx &&
@@ -199,3 +211,4 @@ function evaluate() {
 
 </body>
 </html>
+
