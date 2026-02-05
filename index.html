@@ -5,26 +5,48 @@
 <title>Đào tạo nhận diện mối nguy</title>
 
 <style>
-  body { font-family: Arial; background:#f5f5f5; padding:20px }
-  h1 { text-align:center }
-  .video-wrapper {
-    position:relative;
-    width:800px; max-width:100%;
-    margin:auto; background:#000; border:3px solid #333;
-  }
-  #player { width:100%; height:450px }
-  .hazard {
-    position:absolute;
-    border:2px dashed red;
-    background:rgba(255,0,0,.25);
-    cursor:pointer;
-    display:none;
-  }
-  .hazard.clicked {
-    border-color:green;
-    background:rgba(0,200,0,.35);
-  }
-  .info,.result { text-align:center; margin-top:15px; font-size:18px; font-weight:bold }
+body { font-family: Arial; background:#f5f5f5; padding:20px }
+h1 { text-align:center }
+
+.video-wrapper {
+  position:relative;
+  width:800px;
+  max-width:100%;
+  margin:auto;
+  background:#000;
+  border:3px solid #333;
+}
+
+#player { width:100%; height:450px }
+
+/* lớp bắt click */
+#click-layer {
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  cursor:crosshair;
+  display:none;
+}
+
+/* mối nguy thật */
+.hazard {
+  position:absolute;
+  border:2px dashed red;
+  background:rgba(255,0,0,.25);
+  display:none;
+}
+
+.hazard.correct {
+  border-color:green;
+  background:rgba(0,200,0,.35);
+}
+
+.info,.result {
+  text-align:center;
+  margin-top:15px;
+  font-size:18px;
+  font-weight:bold;
+}
 </style>
 </head>
 
@@ -35,13 +57,18 @@
 <div class="video-wrapper">
   <div id="player"></div>
 
-  <!-- CLICK ZONE -->
-  <div class="hazard" style="top:120px; left:100px; width:150px; height:120px;"></div>
-  <div class="hazard" style="top:240px; left:360px; width:160px; height:130px;"></div>
+  <div id="click-layer"></div>
+
+  <!-- MỐI NGUY THẬT (ẨN BAN ĐẦU) -->
+  <div class="hazard" data-id="1"
+       style="top:120px; left:100px; width:150px; height:120px;"></div>
+
+  <div class="hazard" data-id="2"
+       style="top:240px; left:360px; width:160px; height:130px;"></div>
 </div>
 
 <div class="info">
-  Mối nguy đã phát hiện: <span id="count">0</span> / <span id="total">2</span>
+  Lượt chọn: <span id="tries">0</span> / 2
 </div>
 
 <div class="result" id="result"></div>
@@ -51,26 +78,21 @@
 <script>
 let player;
 const START_TIME = 20;
-const STOP_TIME  = 30;
+const STOP_TIME = 30;
+const MAX_TRIES = 2;
+
+let tries = 0;
+let foundHazards = new Set();
+let evaluated = false;
 
 const hazards = document.querySelectorAll('.hazard');
-const totalHazards = hazards.length;
-let found = 0;
-let evaluated = false;
-let timeWatcher = null;
-
-document.getElementById('total').innerText = totalHazards;
+const clickLayer = document.getElementById('click-layer');
 
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
     videoId: 'fXYMaqxx2sY',
-    playerVars: {
-      controls: 1,
-      rel: 0
-    },
-    events: {
-      onReady: onPlayerReady
-    }
+    playerVars: { controls: 1, rel: 0 },
+    events: { onReady: onPlayerReady }
   });
 }
 
@@ -78,44 +100,64 @@ function onPlayerReady() {
   player.seekTo(START_TIME, true);
   player.playVideo();
 
-  timeWatcher = setInterval(() => {
-    const t = player.getCurrentTime();
-
-    if (t >= STOP_TIME && !evaluated) {
+  const timer = setInterval(() => {
+    if (player.getCurrentTime() >= STOP_TIME) {
       player.pauseVideo();
-      showHazards();
-      clearInterval(timeWatcher);
+      clickLayer.style.display = 'block';
+      clearInterval(timer);
     }
   }, 200);
 }
 
-function showHazards() {
-  hazards.forEach(h => h.style.display = 'block');
-}
+/* xử lý click đoán */
+clickLayer.addEventListener('click', e => {
+  if (evaluated) return;
 
-hazards.forEach(h => {
-  h.addEventListener('click', () => {
-    if (!h.classList.contains('clicked')) {
-      h.classList.add('clicked');
-      found++;
-      document.getElementById('count').innerText = found;
-      if (found === totalHazards) evaluate(true);
+  tries++;
+  document.getElementById('tries').innerText = tries;
+
+  const rect = clickLayer.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  hazards.forEach(h => {
+    const hRect = h.getBoundingClientRect();
+    const hx = hRect.left - rect.left;
+    const hy = hRect.top - rect.top;
+
+    if (
+      x >= hx && x <= hx + hRect.width &&
+      y >= hy && y <= hy + hRect.height
+    ) {
+      foundHazards.add(h.dataset.id);
     }
   });
+
+  if (tries >= MAX_TRIES) {
+    evaluate();
+  }
 });
 
-function evaluate(success) {
+function evaluate() {
   evaluated = true;
+  clickLayer.style.display = 'none';
+
+  hazards.forEach(h => {
+    h.style.display = 'block';
+    if (foundHazards.has(h.dataset.id)) {
+      h.classList.add('correct');
+    }
+  });
+
   const result = document.getElementById('result');
 
-  if (success) {
+  if (foundHazards.size === hazards.length) {
     result.style.color = 'green';
-    result.innerHTML = "✅ ĐÁNH GIÁ ĐÚNG – NGĂN CHẶN ĐƯỢC TAI NẠN";
+    result.innerHTML = "✅ ĐÁNH GIÁ ĐÚNG – NGĂN CHẶN TAI NẠN";
     player.stopVideo();
   } else {
     result.style.color = 'red';
     result.innerHTML = "❌ ĐÁNH GIÁ CHƯA ĐỦ – TAI NẠN XẢY RA";
-    hazards.forEach(h => h.style.display = 'none');
     player.playVideo();
   }
 }
