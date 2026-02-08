@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Nhận diện mối nguy</title>
+<title>Nhận diện mối nguy (Hazard identification)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -78,7 +78,8 @@ h1 {
 
 <body>
 
-<h1>Nhận diện mối nguy trong video</h1>
+<h1> Video sẽ tạm dừng để người chơi xác định các mối nguy nhằm cứu nhân vật. Nếu không phát hiện đủ mối nguy, tai nạn sẽ tiếp diễn. 
+  The video pauses for players to spot hazards and save the character. If not enough hazards are identified, the accident will continue. </h1>
 
 <div class="video-wrapper">
   <div id="player"></div>
@@ -98,7 +99,7 @@ h1 {
 </div>
 
 <div class="info">
-  Lượt chọn: <span id="tries">0</span> / 7
+  Lượt chọn (turn): <span id="tries">0</span> / 7
 </div>
 
 <div class="result" id="result"></div>
@@ -204,3 +205,4 @@ function evaluate() {
 
 </body>
 </html>
+
