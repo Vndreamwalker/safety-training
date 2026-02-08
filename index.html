@@ -31,6 +31,7 @@ h1{text-align:center}
   height:450px;
 }
 
+/* overlay click */
 #overlay{
   position:absolute;
   inset:0;
@@ -39,6 +40,7 @@ h1{text-align:center}
   z-index:10;
 }
 
+/* đúng */
 .correct-box{
   position:absolute;
   border:3px solid lime;
@@ -46,6 +48,7 @@ h1{text-align:center}
   z-index:15;
 }
 
+/* sai */
 .wrong-mark{
   position:absolute;
   width:20px;
@@ -69,8 +72,8 @@ h1{text-align:center}
 
 <h1>Nhận diện mối nguy trong video</h1>
 <div class="subtitle">
-Video sẽ tạm dừng để người chơi xác định các mối nguy nhằm cứu nhân vật.  
-If not enough hazards are identified, the accident will continue.
+Video sẽ tạm dừng để người chơi xác định các mối nguy nhằm cứu nhân vật.
+The video pauses for players to spot hazards and save the character.
 </div>
 
 <div class="video-wrapper" id="videoBox">
@@ -91,6 +94,7 @@ If not enough hazards are identified, the accident will continue.
 let player;
 const STOP_TIME = 30;
 
+/* ====== DỮ LIỆU MỐI NGUY (6 MỐI NGUY) ====== */
 const hazardData = [
   { x:0.472, y:0.562, w:0.206, h:0.213 },
   { x:0.701, y:0.665, w:0.060, h:0.145 },
@@ -103,10 +107,11 @@ const hazardData = [
 let clicks = 0;
 let found = 0;
 let evaluated = false;
-let stopTriggered = false;
+let stopped = false;
 
 document.getElementById('max').innerText = hazardData.length;
 
+/* ====== YOUTUBE ====== */
 function onYouTubeIframeAPIReady(){
   player = new YT.Player('player',{
     videoId:'fXYMaqxx2sY',
@@ -118,10 +123,10 @@ function onYouTubeIframeAPIReady(){
 function onState(e){
   if(e.data === YT.PlayerState.PLAYING){
     const timer = setInterval(()=>{
-      if(!player || stopTriggered) return;
+      if(!player || stopped) return;
 
       if(player.getCurrentTime() >= STOP_TIME){
-        stopTriggered = true;
+        stopped = true;
         player.pauseVideo();
         document.getElementById('overlay').style.display='block';
         clearInterval(timer);
@@ -130,6 +135,7 @@ function onState(e){
   }
 }
 
+/* ====== CLICK CHỌN ====== */
 document.getElementById('overlay').addEventListener('click',function(e){
   if(evaluated || clicks >= hazardData.length) return;
 
@@ -144,8 +150,8 @@ document.getElementById('overlay').addEventListener('click',function(e){
 
   hazardData.forEach(h=>{
     if(!h.selected &&
-      x>=h.x && x<=h.x+h.w &&
-      y>=h.y && y<=h.y+h.h){
+       x>=h.x && x<=h.x+h.w &&
+       y>=h.y && y<=h.y+h.h){
         h.selected = true;
         hit = true;
         found++;
@@ -161,6 +167,7 @@ document.getElementById('overlay').addEventListener('click',function(e){
   }
 });
 
+/* ====== VẼ ĐÚNG ====== */
 function drawCorrect(h){
   const d=document.createElement('div');
   d.className='correct-box';
@@ -171,6 +178,7 @@ function drawCorrect(h){
   document.getElementById('videoBox').appendChild(d);
 }
 
+/* ====== VẼ SAI ====== */
 function drawWrong(x,y){
   const d=document.createElement('div');
   d.className='wrong-mark';
@@ -179,11 +187,12 @@ function drawWrong(x,y){
   document.getElementById('videoBox').appendChild(d);
 }
 
+/* ====== ĐÁNH GIÁ + HIỂN THỊ ĐÁP ÁN 5s ====== */
 function evaluate(){
   evaluated = true;
-  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('overlay').style.display='none';
 
-  // HIỂN THỊ TOÀN BỘ ĐÁP ÁN
+  // hiển thị toàn bộ đáp án
   hazardData.forEach(h=>{
     if(!h.shown){
       drawCorrect(h);
@@ -191,29 +200,29 @@ function evaluate(){
     }
   });
 
-  const r = document.getElementById('result');
+  const r=document.getElementById('result');
   if(found === hazardData.length){
     r.style.color='green';
-    r.innerHTML='✅ ĐÃ NHẬN DIỆN ĐỦ MỐI NGUY';
+    r.innerHTML='✅ NHẬN DIỆN ĐÚNG TẤT CẢ MỐI NGUY';
   }else{
     r.style.color='red';
     r.innerHTML=`❌ CHỈ PHÁT HIỆN ${found}/${hazardData.length} MỐI NGUY`;
   }
 
-  // ⏱️ GIỮ ĐÁP ÁN 5 GIÂY
+  // giữ hiển thị 5 giây
   setTimeout(()=>{
-    clearAllMarks();
-    r.innerHTML = '';
+    clearMarks();
+    r.innerHTML='';
     player.playVideo();
-  }, 5000);
+  },5000);
 }
-  function clearAllMarks(){
+
+/* ====== XÓA OVERLAY ====== */
+function clearMarks(){
   document.querySelectorAll('.correct-box').forEach(e=>e.remove());
   document.querySelectorAll('.wrong-mark').forEach(e=>e.remove());
-}
 }
 </script>
 
 </body>
 </html>
-
