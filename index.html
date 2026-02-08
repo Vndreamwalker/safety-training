@@ -33,18 +33,16 @@ h1{text-align:center}
 
 #overlay{
   position:absolute;
-  top:0;left:0;
-  width:100%;
-  height:100%;
+  inset:0;
   cursor:crosshair;
+  display:none;
   z-index:10;
 }
 
 .correct-box{
   position:absolute;
   border:3px solid lime;
-  background:rgba(0,255,0,0.2);
-  box-sizing:border-box;
+  background:rgba(0,255,0,0.25);
   z-index:15;
 }
 
@@ -81,7 +79,7 @@ If not enough hazards are identified, the accident will continue.
 </div>
 
 <div class="info">
-  Đã chọn: <span id="clicks">0</span> / <span id="max">0</span> |
+  Lượt chọn: <span id="clicks">0</span> / <span id="max">0</span> |
   Đúng: <span id="found">0</span>
 </div>
 
@@ -91,8 +89,7 @@ If not enough hazards are identified, the accident will continue.
 
 <script>
 let player;
-const START_TIME = 20;
-const STOP_TIME  = 30;
+const STOP_TIME = 30;
 
 const hazardData = [
   { x:0.472, y:0.562, w:0.206, h:0.213 },
@@ -103,31 +100,31 @@ const hazardData = [
   { x:0.491, y:0.127, w:0.104, h:0.257 }
 ];
 
-let found = 0;
 let clicks = 0;
+let found = 0;
 let evaluated = false;
+let stopTriggered = false;
 
 document.getElementById('max').innerText = hazardData.length;
 
 function onYouTubeIframeAPIReady(){
   player = new YT.Player('player',{
     videoId:'fXYMaqxx2sY',
-    playerVars:{controls:1},
-    events:{ onReady:onReady, onStateChange:onState }
+    playerVars:{ controls:1 },
+    events:{ onStateChange:onState }
   });
-}
-
-function onReady(){
-  player.seekTo(START_TIME);
-  player.playVideo();
 }
 
 function onState(e){
   if(e.data === YT.PlayerState.PLAYING){
-    const t = setInterval(()=>{
+    const timer = setInterval(()=>{
+      if(!player || stopTriggered) return;
+
       if(player.getCurrentTime() >= STOP_TIME){
+        stopTriggered = true;
         player.pauseVideo();
-        clearInterval(t);
+        document.getElementById('overlay').style.display='block';
+        clearInterval(timer);
       }
     },300);
   }
@@ -167,10 +164,10 @@ document.getElementById('overlay').addEventListener('click',function(e){
 function drawCorrect(h){
   const d=document.createElement('div');
   d.className='correct-box';
-  d.style.left = (h.x*100)+'%';
-  d.style.top  = (h.y*100)+'%';
-  d.style.width = (h.w*100)+'%';
-  d.style.height= (h.h*100)+'%';
+  d.style.left=(h.x*100)+'%';
+  d.style.top =(h.y*100)+'%';
+  d.style.width=(h.w*100)+'%';
+  d.style.height=(h.h*100)+'%';
   document.getElementById('videoBox').appendChild(d);
 }
 
@@ -184,7 +181,9 @@ function drawWrong(x,y){
 
 function evaluate(){
   evaluated = true;
+  document.getElementById('overlay').style.display='none';
   const r=document.getElementById('result');
+
   if(found === hazardData.length){
     r.style.color='green';
     r.innerHTML='✅ CHÚC MỪNG – BẠN ĐÃ NGĂN CHẶN ĐƯỢC TAI NẠN';
