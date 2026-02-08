@@ -117,7 +117,10 @@ window.addEventListener('resize', renderHazards);
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
     videoId: 'fXYMaqxx2sY',
-    playerVars: { controls: 1 },
+    playerVars: {
+      controls: 1,
+      start: 20   // 👉 chạy từ giây 0:20
+    },
     events: {
       onReady: onPlayerReady,
       onStateChange: onPlayerStateChange
@@ -126,7 +129,8 @@ function onYouTubeIframeAPIReady() {
 }
 
 function onPlayerReady() {
-  player.playVideo();
+  player.seekTo(START_TIME, true); // nhảy tới 0:20
+  player.playVideo();              // chạy video
 }
 
 function onPlayerStateChange(event) {
@@ -139,15 +143,15 @@ function checkTime() {
   const interval = setInterval(() => {
     if (!player || evaluated) return;
 
-    if (player.getCurrentTime() >= START_TIME &&
-        player.getCurrentTime() < STOP_TIME) {
+    const currentTime = player.getCurrentTime();
 
-      player.pauseVideo();
-      renderHazards();
-      showHazards();
+    if (currentTime >= STOP_TIME) {
+      player.pauseVideo();   // ⏸️ dừng tại 0:30
+      renderHazards();       // vẽ mối nguy
+      showHazards();         // hiện vùng click
       clearInterval(interval);
     }
-  }, 300);
+  }, 200);
 }
 
 function showHazards() {
@@ -191,3 +195,4 @@ setInterval(() => {
 
 </body>
 </html>
+
