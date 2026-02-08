@@ -2,104 +2,83 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Nhận diện mối nguy (Hazard identification)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đào tạo nhận diện mối nguy</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background:#f5f5f5;
-  padding:10px;
-}
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    padding: 20px;
+  }
 
-h1 {
-  text-align:center;
-  font-size:20px;
-}
+  h1 {
+    text-align: center;
+    font-size: 20px;
+  }
 
-.video-wrapper {
-  position:relative;
-  width:100%;
-  max-width:900px;
-  margin:auto;
-  background:#000;
-  border:3px solid #333;
-  aspect-ratio:16/9;
-}
+  .video-wrapper {
+    position: relative;
+    width: 800px;
+    max-width: 100%;
+    margin: auto;
+    border: 3px solid #333;
+    background: #000;
+    aspect-ratio: 16 / 9;
+  }
 
-#player,
-#click-layer {
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-}
+  #player {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
 
-#click-layer {
-  z-index:6;
-  cursor:crosshair;
-  display:none;
-}
+  .hazard {
+    position: absolute;
+    border: 2px dashed red;
+    background: rgba(255, 0, 0, 0.25);
+    cursor: pointer;
+    display: none;
+    z-index: 5;
+  }
 
-/* VÙNG CHỌN – HIỂN THỊ SẴN */
-.user-select {
-  position:absolute;
-  width:25%;
-  aspect-ratio:1/1;
-  border:3px solid #007bff;
-  background:rgba(0,123,255,.2);
-  pointer-events:none;
-  z-index:7;
-  left:37.5%;
-  top:37.5%;
-}
+  .hazard.clicked {
+    border-color: green;
+    background: rgba(0, 200, 0, 0.35);
+  }
 
-/* mối nguy */
-.hazard {
-  position:absolute;
-  border:3px dashed red;
-  background:rgba(255,0,0,.25);
-  z-index:5;
-}
-
-.hazard.correct {
-  border-color:green;
-  background:rgba(0,200,0,.35);
-}
-
-.info,.result {
-  text-align:center;
-  margin-top:12px;
-  font-size:16px;
-  font-weight:bold;
-}
+  .info, .result {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+  }
 </style>
 </head>
 
 <body>
 
-<h1> Video sẽ tạm dừng để người chơi xác định các mối nguy nhằm cứu nhân vật. Nếu không phát hiện đủ mối nguy, tai nạn sẽ tiếp diễn. 
-  The video pauses for players to spot hazards and save the character. If not enough hazards are identified, the accident will continue. </h1>
+<h1>
+  Video sẽ tạm dừng để người chơi xác định các mối nguy nhằm cứu nhân vật.
+  Nếu không phát hiện đủ mối nguy, tai nạn sẽ tiếp diễn.<br>
+  <em>The video pauses for players to spot hazards and save the character.
+  If not enough hazards are identified, the accident will continue.</em>
+</h1>
 
-<div class="video-wrapper">
+<div class="video-wrapper" id="videoWrapper">
   <div id="player"></div>
-  <div id="click-layer"></div>
 
-  <!-- VÙNG CHỌN HIỂN THỊ NGAY -->
-  <div id="userSelect" class="user-select"></div>
-
-  <!-- 7 MỐI NGUY -->
-  <div class="hazard" data-id="1" data-x="0.12" data-y="0.30" data-w="0.15" data-h="0.35"></div>
-  <div class="hazard" data-id="2" data-x="0.40" data-y="0.18" data-w="0.12" data-h="0.25"></div>
-  <div class="hazard" data-id="3" data-x="0.37" data-y="0.50" data-w="0.20" data-h="0.18"></div>
-  <div class="hazard" data-id="4" data-x="0.50" data-y="0.58" data-w="0.08" data-h="0.15"></div>
-  <div class="hazard" data-id="5" data-x="0.56" data-y="0.25" data-w="0.08" data-h="0.45"></div>
-  <div class="hazard" data-id="6" data-x="0.63" data-y="0.45" data-w="0.22" data-h="0.30"></div>
-  <div class="hazard" data-id="7" data-x="0.28" data-y="0.40" data-w="0.12" data-h="0.22"></div>
+  <!-- 6 MỐI NGUY (THEO TỶ LỆ) -->
+  <div class="hazard" data-x="0.472" data-y="0.562" data-w="0.206" data-h="0.213"></div>
+  <div class="hazard" data-x="0.701" data-y="0.665" data-w="0.060" data-h="0.145"></div>
+  <div class="hazard" data-x="0.807" data-y="0.461" data-w="0.032" data-h="0.103"></div>
+  <div class="hazard" data-x="0.791" data-y="0.550" data-w="0.206" data-h="0.225"></div>
+  <div class="hazard" data-x="0.684" data-y="0.272" data-w="0.107" data-h="0.351"></div>
+  <div class="hazard" data-x="0.491" data-y="0.127" data-w="0.104" data-h="0.257"></div>
 </div>
 
 <div class="info">
-  Lượt chọn (turn): <span id="tries">0</span> / 7
+  Mối nguy đã phát hiện: <span id="count">0</span> / <span id="total">0</span>
 </div>
 
 <div class="result" id="result"></div>
@@ -108,23 +87,21 @@ h1 {
 
 <script>
 let player;
-
 const START_TIME = 20;
-const STOP_TIME  = 30;
+const STOP_TIME = 30;
 
-let tries = 0;
+const hazards = document.querySelectorAll('.hazard');
+const totalHazards = hazards.length;
+let found = 0;
 let evaluated = false;
 
-const hazards    = document.querySelectorAll('.hazard');
-const MAX_TRIES  = hazards.length;
+document.getElementById('total').innerText = totalHazards;
 
-const clickLayer = document.getElementById('click-layer');
-const userSelect = document.getElementById('userSelect');
-
-/* RENDER THEO TỶ LỆ */
+/* RENDER HAZARD THEO TỶ LỆ */
 function renderHazards() {
-  const w = clickLayer.clientWidth;
-  const h = clickLayer.clientHeight;
+  const wrapper = document.getElementById('videoWrapper');
+  const w = wrapper.clientWidth;
+  const h = wrapper.clientHeight;
 
   hazards.forEach(hz => {
     hz.style.left   = hz.dataset.x * w + 'px';
@@ -140,69 +117,77 @@ window.addEventListener('resize', renderHazards);
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
     videoId: 'fXYMaqxx2sY',
-    playerVars: { controls: 1, rel: 0 },
-    events: { onReady: onPlayerReady }
+    playerVars: { controls: 1 },
+    events: {
+      onReady: onPlayerReady,
+      onStateChange: onPlayerStateChange
+    }
   });
 }
 
 function onPlayerReady() {
-  renderHazards();
-  player.seekTo(START_TIME, true);
   player.playVideo();
-
-  const timer = setInterval(() => {
-    if (player.getCurrentTime() >= STOP_TIME) {
-      player.pauseVideo();
-      clickLayer.style.display = 'block';
-      clearInterval(timer);
-    }
-  }, 200);
 }
 
-/* CLICK DI CHUYỂN VÙNG CHỌN */
-clickLayer.addEventListener('pointerdown', e => {
-  if (evaluated || tries >= MAX_TRIES) return;
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.PLAYING) {
+    checkTime();
+  }
+}
 
-  tries++;
-  document.getElementById('tries').innerText = tries;
+function checkTime() {
+  const interval = setInterval(() => {
+    if (!player || evaluated) return;
 
-  const rect = clickLayer.getBoundingClientRect();
-  const x = (e.clientX - rect.left) / rect.width;
-  const y = (e.clientY - rect.top) / rect.height;
+    if (player.getCurrentTime() >= START_TIME &&
+        player.getCurrentTime() < STOP_TIME) {
 
-  userSelect.style.left = (x * 100 - 12.5) + '%';
-  userSelect.style.top  = (y * 100 - 12.5) + '%';
+      player.pauseVideo();
+      renderHazards();
+      showHazards();
+      clearInterval(interval);
+    }
+  }, 300);
+}
 
-  hazards.forEach(hz => {
-    const hx = +hz.dataset.x;
-    const hy = +hz.dataset.y;
-    const hw = +hz.dataset.w;
-    const hh = +hz.dataset.h;
+function showHazards() {
+  hazards.forEach(h => h.style.display = 'block');
+}
 
-    if (x >= hx && x <= hx + hw && y >= hy && y <= hy + hh) {
-      hz.classList.add('correct');
+/* CLICK MỐI NGUY */
+hazards.forEach(hazard => {
+  hazard.addEventListener('click', function () {
+    if (!this.classList.contains('clicked')) {
+      this.classList.add('clicked');
+      found++;
+      document.getElementById('count').innerText = found;
     }
   });
-
-  if (tries >= MAX_TRIES) evaluate();
 });
 
 /* ĐÁNH GIÁ */
-function evaluate() {
+function evaluateResult() {
   evaluated = true;
-  clickLayer.style.display = 'none';
-
-  const correct = document.querySelectorAll('.hazard.correct').length;
   const result = document.getElementById('result');
 
-  result.style.color = correct === hazards.length ? 'green' : 'red';
-  result.innerHTML =
-    correct === hazards.length
-      ? "✅ PHÁT HIỆN ĐỦ 7 MỐI NGUY"
-      : `❌ PHÁT HIỆN ${correct}/7 MỐI NGUY`;
+  if (found === totalHazards) {
+    result.style.color = 'green';
+    result.innerHTML = "✅ ĐÁNH GIÁ ĐÚNG – NGĂN CHẶN ĐƯỢC TAI NẠN";
+    player.stopVideo();
+  } else {
+    result.style.color = 'red';
+    result.innerHTML = "❌ ĐÁNH GIÁ CHƯA ĐỦ – TAI NẠN XẢY RA";
+    hazards.forEach(h => h.style.display = 'none');
+    player.playVideo();
+  }
 }
+
+setInterval(() => {
+  if (!evaluated && found === totalHazards) {
+    evaluateResult();
+  }
+}, 500);
 </script>
 
 </body>
 </html>
-
