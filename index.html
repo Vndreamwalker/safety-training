@@ -181,20 +181,39 @@ function drawWrong(x,y){
 
 function evaluate(){
   evaluated = true;
-  document.getElementById('overlay').style.display='none';
-  const r=document.getElementById('result');
+  document.getElementById('overlay').style.display = 'none';
 
+  // HIỂN THỊ TOÀN BỘ ĐÁP ÁN
+  hazardData.forEach(h=>{
+    if(!h.shown){
+      drawCorrect(h);
+      h.shown = true;
+    }
+  });
+
+  const r = document.getElementById('result');
   if(found === hazardData.length){
     r.style.color='green';
-    r.innerHTML='✅ CHÚC MỪNG – BẠN ĐÃ NGĂN CHẶN ĐƯỢC TAI NẠN';
-    player.stopVideo();
+    r.innerHTML='✅ ĐÃ NHẬN DIỆN ĐỦ MỐI NGUY';
   }else{
     r.style.color='red';
-    r.innerHTML='❌ KHÔNG PHÁT HIỆN ĐỦ MỐI NGUY – TAI NẠN XẢY RA';
-    player.playVideo();
+    r.innerHTML=`❌ CHỈ PHÁT HIỆN ${found}/${hazardData.length} MỐI NGUY`;
   }
+
+  // ⏱️ GIỮ ĐÁP ÁN 5 GIÂY
+  setTimeout(()=>{
+    clearAllMarks();
+    r.innerHTML = '';
+    player.playVideo();
+  }, 5000);
+}
+  function clearAllMarks(){
+  document.querySelectorAll('.correct-box').forEach(e=>e.remove());
+  document.querySelectorAll('.wrong-mark').forEach(e=>e.remove());
+}
 }
 </script>
 
 </body>
 </html>
+
